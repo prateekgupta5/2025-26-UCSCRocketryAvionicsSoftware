@@ -5,3 +5,5 @@
 #Do not ignore the tester directory and the stuff inside
 !tester/
 !tester/**
+!main/
+!main/**
