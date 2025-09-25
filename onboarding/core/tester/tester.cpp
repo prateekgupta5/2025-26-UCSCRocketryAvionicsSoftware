@@ -60,6 +60,11 @@ bool tester::protocolTest(const uint8_t* inComingPacket, size_t packetLength) {
         if (!((inComingPacket[5] >= 'a' && inComingPacket[5] <= 'z') && (inComingPacket[6] >= 'a' && inComingPacket[6] <= 'z'))) {
             Serial.println("Invalid message type ID, must be 2 lowercase letters");
             isValid = false;
+            //check if its the IMU data type
+            if (!(inComingPacket[5] == 'i' && inComingPacket[6] == 'm')) {
+                Serial.println("Invalid message type ID, must be 'im' for IMU data");
+                isValid = false;
+            }
         }
         //check timestamp
         for (int i = 0; i < 4; i++){
