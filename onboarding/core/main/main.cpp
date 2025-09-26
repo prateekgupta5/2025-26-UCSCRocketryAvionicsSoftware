@@ -78,6 +78,7 @@ void setup()
 
 void loop()
 {
+    BNO08x_RVC_Data heading;
     //read IMU data and store in three variables 
     //call stateEstimation function 
 
