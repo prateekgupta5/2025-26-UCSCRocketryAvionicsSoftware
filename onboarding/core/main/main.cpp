@@ -1,6 +1,11 @@
 #include <Arduino.h>
+//below is the library for the IMU, which is the BNO088
+#include "Adafruit_BNO08x_RVC.h"
 
-const long baudrate = 57600;
+
+Adafruit_BNO08x_RVC rvc = Adafruit_BNO08x_RVC();
+const long baudrate = 115200;
+//this is the sensor's factury default baud rate for the RVC setting. 
 
 //packet structure
 struct UART_Packet
@@ -46,8 +51,29 @@ UART_Packet createPacket(uint8_t start_byte, uint32_t sequence_id, uint16_t id, 
 void setup()
 {
     Serial.begin(baudrate);
+    while (!Serial)
+    {
+        delay(10);
+    }
+
+    Serial.println("Adafruit BNO08x IMU - UART-RVC mode");
+
+    Serial1.begin(baudrate);
+    while (!Serial1)
+    {
+        delay(10);
+    }
     //initalize IMU
     //initalize pins
+
+    
+    if (!rvc.begin(&Serial1)) { // connect to the sensor over hardware serial
+        Serial.println("Could not find BNO08x");
+        while (1)
+        delay(10);
+    }
+
+    Serial.println("Found BNO08x");
 }
 
 void loop()
