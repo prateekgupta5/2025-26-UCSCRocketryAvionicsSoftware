@@ -83,6 +83,8 @@ bool tester::protocolTest(const uint8_t* inComingPacket, size_t packetLength) {
     }
 
     //passed all checks
-    Serial.println("Packet is valid");
+    if (isValid) {
+        Serial.println("Packet is valid");
+    }
     return isValid;
 }
