@@ -5,6 +5,7 @@
 
 Adafruit_BNO08x_RVC rvc = Adafruit_BNO08x_RVC();
 const long baudrate = 115200;
+float current_velocity_y = 0;
 //this is the sensor's factury default baud rate for the RVC setting. 
 
 //packet structure
@@ -29,15 +30,11 @@ struct IMU_Data
 
 //relevent functions 
 
-IMU_Data stateEstimation(uint8_t x, uint8_t y, uint8_t z)
+float y_velocity (float initial_velocity_y, float delta_time, float y_acceleration)
 {
-    //subtract x, y and z from their bias: x -= x_bias
-    //multiply x, y, and z with the scale factor to convert counts given from IMU to m/s^2 unit
-
-    //store in struct
-    IMU_Data returnData = {x, y, z};
-
-    return returnData;
+    // To calculate the velocity, we will be using this simple physics equation: y_f = y_i + a(△t), assuming that acceleration (a) is constant for the short time period. 
+    float final_velocity = initial_velocity_y + (y_acceleration*delta_time);
+    return final_velocity;
 }
 
 UART_Packet createPacket(uint8_t start_byte, uint32_t sequence_id, uint16_t id, uint32_t timestamp, uint8_t payload[17], uint16_t crc_16, uint16_t end_byte)
@@ -79,15 +76,30 @@ void setup()
 void loop()
 {
     BNO08x_RVC_Data heading;
-    //read IMU data and store in three variables 
-    //call stateEstimation function 
 
+    //read IMU acceleration data and store in three variables 
+    float x_acceleration = heading.x_accel;
+    float y_acceleration = heading.y_accel;
+    float z_acceleration = heading.z_accel;
+
+    //store in struct
+    IMU_Data acceleration_data = {x_acceleration, y_acceleration, z_acceleration};
+
+    float delta_time = 0.01;
+
+    //call stateEstimation function
+    current_velocity_y = y_velocity(current_velocity_y, delta_time, y_acceleration);
+
+    
+    
     //setup all variables for packet creation
     //call createPacket function
 
     //print packet variables 
-    //add delay
 
+
+    //add delay
+    delay(5000);
     
 
 }
