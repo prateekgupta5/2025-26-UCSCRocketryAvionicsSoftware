@@ -71,7 +71,7 @@ bool tester::protocolTest(const uint8_t* inComingPacket, size_t packetLength) {
             isValid = false;
         }
         //check packet sequence ID
-        for (int i = 0, i < 4; i++){
+        for (int i = 0; i < 4; i++){
             if (inComingPacket[1 + i] < 0x00 || inComingPacket[1 + i] > 0x09) {
                 Serial.println("Invalid packet sequence ID, must be 4 digits between 0 and 9");
                 isValid = false;
@@ -107,6 +107,8 @@ bool tester::protocolTest(const uint8_t* inComingPacket, size_t packetLength) {
     }
 
     //passed all checks
-    Serial.println("Packet is valid");
+    if (isValid) {
+        Serial.println("Packet is valid");
+    }
     return isValid;
 }
