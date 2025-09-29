@@ -1,7 +1,11 @@
 #include <Arduino.h>
+#include <iostream>
+#include <cstring>
+#include "tester.h"
 //below is the library for the IMU, which is the BNO088
 #include "Adafruit_BNO08x_RVC.h"
 
+using namespace std;
 
 Adafruit_BNO08x_RVC rvc = Adafruit_BNO08x_RVC();
 const long baudrate = 115200;
@@ -44,7 +48,24 @@ float y_velocity (float initial_velocity_y, float delta_time, float y_accelerati
 //     return returnPacket;
 // }
 
+uint16_t calculateCRC(uint8_t* data, size_t length)
+{
+    uint16_t crc = 0xFFFF; // Initial value for CRC-16-CCITT
 
+    for (size_t i = 0; i < length; ++i) {
+        crc ^= (uint16_t)data[i] << 8; //Bitshift left 1 byte
+
+        for (int j = 0; j < 8; ++j) {
+            if (crc & 0x8000) { // If MSB is 1
+                crc = (crc << 1) ^ 0x1021; // XOR with polynomial
+            } else {
+                crc <<= 1; // Shift left
+            }
+        }
+    }
+
+    return crc;
+}
 
 void setup()
 {
@@ -77,6 +98,9 @@ void setup()
 void loop()
 {
     BNO08x_RVC_Data heading;
+    if (!rvc.read(&heading)) {
+        return;
+    }
 
     //read IMU acceleration data and store in three variables 
     float x_acceleration = heading.x_accel;
@@ -84,7 +108,6 @@ void loop()
     float z_acceleration = heading.z_accel;
 
     //store in struct
-    IMU_Data acceleration_data = {x_acceleration, y_acceleration, z_acceleration};
 
     float delta_time = 0.01;
 
@@ -99,34 +122,47 @@ void loop()
     //We have a 17 byte payload, but our data (current_velocity_y) is only 4 bits! To ensure our payload
     //always stays 17 bytes long, we will have the beginning with zeros. 
     uint8_t payload[17] = {0}; //lets start with making the payload have all 0s, then lets modify its last four bytes to hold our data 
-    std::memcpy(&payload[13], &current_velocity_y, sizeof(current_velocity_y)); 
+    memcpy(&payload[13], &current_velocity_y, sizeof(current_velocity_y)); 
 
-    uint16_t crc_16 = 0x1101 //random checksum
-    uint16_t end_byte = 0x0D0A
+    uint16_t end_byte = 0x0D0A;
 
 
     //time to put together our UART packet
     uint8_t packet[32];
 
     int offset = 0; //start adding data at byte 13
-    std::memcpy(&packet[offset], &start_byte, sizeof(start_byte));
-    offset += sizeof(start_byte);
-    std::memcpy(&packet[offset], &sequence_id, sizeof(sequence_id));
-    offset += sizeof(sequence_id);
-    std::memcpy(&packet[offset], &id, sizeof(id));
-    offset += sizeof(id);
-    std::memcpy(&packet[offset], &timestamp, sizeof(timestamp));
-    offset += sizeof(timestamp);
-    std::memcpy(&packet[offset], payload, sizeof(payload));
-    offset += sizeof(payload);
-    std::memcpy(&packet[offset], &crc_16, sizeof(crc_16));
-    offset += sizeof(crc_16);
-    std::memcpy(&packet[offset], &end_byte, sizeof(end_byte));
-    offset += sizeof(end_byte);
+    packet[offset++] = start_byte;
 
-    if (protocolTest(packet, 32))
+    packet[offset++] = (sequence_id >> 24) & 0xFF; // Byte 0
+    packet[offset++] = (sequence_id >> 16) & 0xFF; // Byte 1
+    packet[offset++] = (sequence_id >> 8) & 0xFF;  // Byte 2
+    packet[offset++] = sequence_id & 0xFF;         // Byte 3
+
+    packet[offset++] = (id >> 8) & 0xFF; // Byte 0
+    packet[offset++] = id & 0xFF;        // Byte 1
+
+    packet[offset++] = (timestamp >> 24) & 0xFF; // Byte 0
+    packet[offset++] = (timestamp >> 16) & 0xFF; // Byte 1
+    packet[offset++] = (timestamp >> 8) & 0xFF;  // Byte 2
+    packet[offset++] = timestamp & 0xFF;         // Byte 3
+    
+    memcpy(&packet[offset], payload, sizeof(payload));
+    offset += sizeof(payload);
+
+    uint16_t crc_16 = calculateCRC(packet, offset);
+    packet[offset++] = (crc_16 >> 8) & 0xFF; // Byte 0
+    packet[offset++] = crc_16 & 0xFF;        // Byte 1
+
+    packet[offset++] = (end_byte >> 8) & 0xFF; // Byte 0
+    packet[offset++] = end_byte & 0xFF;        // Byte 1
+
+    //testing the datapacket with tester class
+    tester test;
+    if (test.protocolTest(packet, 32))
     {
         Serial.println("Packet Valid");
+    } else {
+        Serial.println("Packet Invalid");
     }
 
 

@@ -95,7 +95,7 @@ bool tester::protocolTest(const uint8_t* inComingPacket, size_t packetLength) {
             }
         }
         //check CRC-16
-        if (!(crc16CCITT(inComingPacket, packetLength))) {
+        if (!(crc16CCITT(inComingPacket, 30))) {
             Serial.println("Invalid CRC 16 check, Data was lost or CRC implemented wrong");
             isValid = false;
         }
