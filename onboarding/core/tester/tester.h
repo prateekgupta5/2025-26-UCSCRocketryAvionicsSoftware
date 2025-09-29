@@ -11,7 +11,8 @@ class tester {
     //Test functions
     bool protocolTest(const uint8_t* inComingPacket, size_t packetLength);
 
-    //TO-DO: function to test the math for state estimation
+    bool crc16CCITT(const uint8_t* data, size_t length);
+
 };
 
 #endif
