@@ -25,6 +25,27 @@ tester::tester() {}
     Output:
         True if the packet is valid, false otherwise
 */
+
+bool tester::crc16CCITT(const uint8_t* data, size_t length) {
+    //data should include crc so length will be longer on this side
+    uint16_t crc = 0xFFFF; // Initial value for CRC-16-CCITT
+
+    for (size_t i = 0; i < length; ++i) {
+        crc ^= (uint16_t)data[i] << 8; //Bitshift left 1 byte
+
+        for (int j = 0; j < 8; ++j) {
+            if (crc & 0x8000) { // If MSB is 1
+                crc = (crc << 1) ^ 0x1021; // XOR with polynomial
+            } else {
+                crc <<= 1; // Shift left
+            }
+        }
+    }
+
+    return crc == 0;
+}
+
+
 bool tester::protocolTest(const uint8_t* inComingPacket, size_t packetLength) {
     bool isValid = true;
     //print incoming packet
@@ -73,8 +94,11 @@ bool tester::protocolTest(const uint8_t* inComingPacket, size_t packetLength) {
                 isValid = false;
             }
         }
-        //TO-DO: check CRC-16
-
+        //check CRC-16
+        if (!(crc16CCITT(inComingPacket, packetLength))) {
+            Serial.println("Invalid CRC 16 check, Data was lost or CRC implemented wrong");
+            isValid = false;
+        }
         //check end byte
         if (!(inComingPacket[30] == 0x0D && inComingPacket[31] == 0x0A)) {
             Serial.println("Invalid end byte, must be <CR><LF>");
