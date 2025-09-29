@@ -1,9 +1,3 @@
-# Ignore everything in this directory
-*
-# Except this file
-!.gitignore
-#Do not ignore the tester directory and the stuff inside
-!tester/
-!tester/**
-!main/
-!main/**
+# ignore this file
+.gitignore
+
