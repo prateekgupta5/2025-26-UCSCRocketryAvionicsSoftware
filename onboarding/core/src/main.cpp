@@ -27,7 +27,7 @@ void writeToPacket(uint8_t* packet, int& offset, T data) {
 
 uint16_t calculateCRC(uint8_t* data, size_t length)
 {
-    
+    //https://www.youtube.com/watch?v=-oUrtqvUA2o
 }
 
 void setup()
